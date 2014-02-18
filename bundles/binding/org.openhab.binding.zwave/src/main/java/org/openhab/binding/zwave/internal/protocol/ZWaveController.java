@@ -318,58 +318,61 @@ public class ZWaveController {
 	private void handleApplicationUpdateRequest(SerialMessage incomingMessage) {
 		logger.trace("Handle Message Application Update Request");
 		int nodeId = incomingMessage.getMessagePayloadByte(1);
-		
+
 		logger.trace("Application Update Request from Node " + nodeId);
 		UpdateState updateState = UpdateState.getUpdateState(incomingMessage.getMessagePayloadByte(0));
-		
+
 		switch (updateState) {
 		case NODE_INFO_RECEIVED:
-			logger.debug("Application update request, node information received.");			
-			int length = incomingMessage.getMessagePayloadByte(2);
 			ZWaveNode node = getNode(nodeId);
-			
-			node.resetResendCount();
-			
-			for (int i = 6; i < length + 3; i++) {
-				int data = incomingMessage.getMessagePayloadByte(i);
-				if(data == 0xef )  {
-					// TODO: Implement control command classes
-					break;
+			if (node.getNodeStage() == NodeStage.DONE) {
+				// if we receive an Application Update Request and the node is already 
+				// fully initialised we assume this is a request to the controller to 
+				// re-get the current node values
+				logger.debug("Application update request, requesting node state.");			
+
+				// reset and advance node stage to trigger the value request messages
+				node.setNodeStage(NodeStage.DYNAMIC);
+				node.advanceNodeStage(NodeStage.DONE);
+			} else {		
+				// otherwise continue with the initialisation process...
+				logger.debug("Application update request, node information received.");							
+				node.resetResendCount();
+
+				int length = incomingMessage.getMessagePayloadByte(2);
+				for (int i = 6; i < length + 3; i++) {
+					int data = incomingMessage.getMessagePayloadByte(i);
+					if (data == 0xef)  {
+						// TODO: Implement control command classes
+						break;
+					}
+					logger.debug(String.format("Adding command class 0x%02X to the list of supported command classes.", data));
+					ZWaveCommandClass commandClass = ZWaveCommandClass.getInstance(data, node, this);
+					if (commandClass != null)
+						node.addCommandClass(commandClass);
 				}
-				logger.debug(String.format("Adding command class 0x%02X to the list of supported command classes.", data));
-				ZWaveCommandClass commandClass = ZWaveCommandClass.getInstance(data, node, this);
-				if (commandClass != null)
-					node.addCommandClass(commandClass);
+
+				// advance node stage
+				node.advanceNodeStage(NodeStage.MANSPEC01);
 			}
-			
-			// advance node stage.
-			// TEST CODE
-			logger.trace("TEST: reset NodeStage");
-			node.setNodeStage(NodeStage.DETAILS);
-			node.advanceNodeStage(NodeStage.MANSPEC01);
-			
+
+			// TODO: not sure if this should be out here, or inside the 'else' clause above?
 			if (incomingMessage.getMessageClass() == this.lastSentMessage.getExpectedReply() && !incomingMessage.isTransActionCanceled()) {
 				notifyEventListeners(new ZWaveTransactionCompletedEvent(this.lastSentMessage));
 				transactionCompleted.release();
 				logger.trace("Released. Transaction completed permit count -> {}", transactionCompleted.availablePermits());
 			}
-
-			// Treat the node information frame as a wakeup
-			ZWaveWakeUpCommandClass wakeUp = (ZWaveWakeUpCommandClass)node.getCommandClass(ZWaveCommandClass.CommandClass.WAKE_UP);
-			if(wakeUp != null) {
-				wakeUp.setAwake(true);
-			}
 			break;
 		case NODE_INFO_REQ_FAILED:
 			logger.debug("Application update request, Node Info Request Failed, re-request node info.");
-			
+
 			SerialMessage requestInfoMessage = this.lastSentMessage;
-			
+
 			if (requestInfoMessage.getMessageClass() != SerialMessageClass.RequestNodeInfo) {
 				logger.warn("Got application update request without node info request, ignoring.");
 				return;
 			}
-				
+
 			if (--requestInfoMessage.attempts >= 0) {
 				logger.error("Got Node Info Request Failed while sending this serial message. Requeueing");
 				this.enqueue(requestInfoMessage);
