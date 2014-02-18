@@ -343,6 +343,9 @@ public class ZWaveController {
 			}
 			
 			// advance node stage.
+			// TEST CODE
+			logger.trace("TEST: reset NodeStage");
+			node.setNodeStage(NodeStage.DETAILS);
 			node.advanceNodeStage(NodeStage.MANSPEC01);
 			
 			if (incomingMessage.getMessageClass() == this.lastSentMessage.getExpectedReply() && !incomingMessage.isTransActionCanceled()) {
