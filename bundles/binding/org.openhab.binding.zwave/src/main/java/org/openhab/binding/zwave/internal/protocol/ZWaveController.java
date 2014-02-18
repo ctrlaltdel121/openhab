@@ -356,6 +356,11 @@ public class ZWaveController {
 				node.advanceNodeStage(NodeStage.MANSPEC01);
 			}
 
+			if(node.getNodeStage() == NodeStage.DYNAMIC) {
+				logger.trace("Node stage still DYNAMIC. Advance to DONE");
+				node.advanceNodeStage(NodeStage.DONE);
+			}
+
 			// TODO: not sure if this should be out here, or inside the 'else' clause above?
 			if (incomingMessage.getMessageClass() == this.lastSentMessage.getExpectedReply() && !incomingMessage.isTransActionCanceled()) {
 				notifyEventListeners(new ZWaveTransactionCompletedEvent(this.lastSentMessage));
