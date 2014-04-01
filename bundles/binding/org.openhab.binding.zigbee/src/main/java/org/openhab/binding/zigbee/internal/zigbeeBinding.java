@@ -6,12 +6,11 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.openhab.binding.x10.internal;
+package org.openhab.binding.zigbee.internal;
 
 import java.util.Dictionary;
 
-import org.openhab.binding.x10.x10BindingProvider;
-import org.openhab.binding.x10.internal.x10GenericBindingProvider.x10BindingConfig;
+import org.openhab.binding.zigbee.zigbeeBindingProvider;
 
 import org.apache.commons.lang.StringUtils;
 import org.openhab.core.binding.AbstractActiveBinding;
@@ -21,8 +20,7 @@ import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+	
 
 /**
  * Implement this class if you are going create an actively polling service
@@ -31,23 +29,20 @@ import java.io.InputStreamReader;
  * @author Benji Arnold
  * @since 1.4.0-SNAPSHOT
  */
-public class x10Binding extends AbstractActiveBinding<x10BindingProvider> implements ManagedService {
+public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> implements ManagedService {
 
-	private static final Logger logger = LoggerFactory.getLogger(x10Binding.class);
+	private static final Logger logger = 
+		LoggerFactory.getLogger(zigbeeBinding.class);
 
 	
 	/** 
-	 * the refresh interval which is used to poll values from the x10
+	 * the refresh interval which is used to poll values from the zigbee
 	 * server (optional, defaults to 60000ms)
 	 */
 	private long refreshInterval = 60000;
 	
-	/**
-	 * The serial port for the x10 controller
-	 */
-	private String port;
 	
-	public x10Binding() {
+	public zigbeeBinding() {
 	}
 		
 	
@@ -73,7 +68,7 @@ public class x10Binding extends AbstractActiveBinding<x10BindingProvider> implem
 	 */
 	@Override
 	protected String getName() {
-		return "x10 Refresh Service";
+		return "zigbee Refresh Service";
 	}
 	
 	/**
@@ -94,50 +89,6 @@ public class x10Binding extends AbstractActiveBinding<x10BindingProvider> implem
 		// event bus goes here. This method is only called if one of the 
 		// BindingProviders provide a binding for the given 'itemName'.
 		logger.debug("internalReceiveCommand() is called!");
-		logger.trace("internalReceiveCommand itemName = " + itemName);
-		logger.trace("internalReceiveCommand command = " + command.toString());
-		
-		
-		for(x10BindingProvider provider: providers) {
-			if(provider.providesBindingFor(itemName)) {
-				logger.trace("Found a binding provider for item: " + itemName);
-				
-				String itemCode = provider.getItemCode(itemName);
-				
-				String bash_command = "";
-				
-				// Get the bash_command for the given command
-				x10CommandClass commandClass = new x10CommandClass();
-				
-				try {
-					bash_command = commandClass.getCommand(command.toString(), itemCode);
-				} catch(IllegalArgumentException e) {
-					logger.error("Command: " + command.toString() + " is not supported");
-				}
-				
-				StringBuffer output = new StringBuffer();
-				 
-				Process p;
-				try {
-					p = Runtime.getRuntime().exec(bash_command);
-					p.waitFor();
-					BufferedReader reader = 
-		                            new BufferedReader(new InputStreamReader(p.getInputStream()));
-		 
-		                        String line = "";			
-					while ((line = reader.readLine())!= null) {
-						output.append(line + "\n");
-					}
-		 
-				} catch (Exception e) {
-					logger.trace(e.getMessage());
-				}
-		 
-				logger.trace("OUTPUT: " + output.toString());
-			}
-			
-		}
-		
 	}
 	
 	/**
@@ -164,6 +115,8 @@ public class x10Binding extends AbstractActiveBinding<x10BindingProvider> implem
 			if (StringUtils.isNotBlank(refreshIntervalString)) {
 				refreshInterval = Long.parseLong(refreshIntervalString);
 			}
+			
+			// read further config parameters here ...
 
 			setProperlyConfigured(true);
 		}

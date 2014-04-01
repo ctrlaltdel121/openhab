@@ -96,6 +96,7 @@
     <module>org.openhab.binding.netatmo.test</module>
     <module>org.openhab.binding.hdanywhere</module>
     <module>org.openhab.binding.x10</module>
+    <module>org.openhab.binding.zigbee</module>
   </modules>
 
 </project>
