@@ -27,4 +27,7 @@ Export-Package: org.openhab.binding.zigbee
 Bundle-DocURL: http://www.openhab.org
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Service-Component: OSGI-INF/binding.xml, OSGI-INF/genericbindingprovider.xml
-Bundle-ClassPath: .
+Bundle-ClassPath: .,
+ lib/xbee-api-0.9.jar,
+ lib/RXTXcomm.jar,
+ lib/log4j.jar

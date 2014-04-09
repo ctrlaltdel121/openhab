@@ -8,13 +8,17 @@
  */
 package org.openhab.binding.zigbee.internal;
 
+import java.util.Arrays;
+
+import org.apache.commons.lang.ArrayUtils;
 import org.openhab.binding.zigbee.zigbeeBindingProvider;
 import org.openhab.core.binding.BindingConfig;
 import org.openhab.core.items.Item;
-import org.openhab.core.library.items.DimmerItem;
-import org.openhab.core.library.items.SwitchItem;
+
 import org.openhab.model.item.binding.AbstractGenericBindingProvider;
 import org.openhab.model.item.binding.BindingConfigParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -25,6 +29,10 @@ import org.openhab.model.item.binding.BindingConfigParseException;
  */
 public class zigbeeGenericBindingProvider extends AbstractGenericBindingProvider implements zigbeeBindingProvider {
 
+	private static final Logger logger = LoggerFactory.getLogger(zigbeeGenericBindingProvider.class);
+	
+	private static final int DEFAULT_BAUD_RATE = 9600;
+	
 	/**
 	 * {@inheritDoc}
 	 */
@@ -49,18 +57,50 @@ public class zigbeeGenericBindingProvider extends AbstractGenericBindingProvider
 	 */
 	@Override
 	public void processBindingConfiguration(String context, Item item, String bindingConfig) throws BindingConfigParseException {
+		logger.trace("processBindingConfiguration({}, {})", item.getName(), bindingConfig);
 		super.processBindingConfiguration(context, item, bindingConfig);
-		zigbeeBindingConfig config = new zigbeeBindingConfig();
 		
-		//parse bindingconfig here ...
+		int b_rate;
 		
-		addBindingConfig(item, config);		
+		try {
+			b_rate = Integer.parseInt(bindingConfig);
+			if(baudRateIsValid(b_rate)) {
+				zigbeeBindingConfig.setBaudRate(b_rate);
+				//addBindingConfig(item, config);
+			}
+		} catch(NumberFormatException e) {
+			logger.warn("Baud rate must be an integer. Using default baud_rate of " + DEFAULT_BAUD_RATE);
+		}
+				
 	}
 	
-	
-	class zigbeeBindingConfig implements BindingConfig {
-		// put member fields here which holds the parsed values
+	private boolean baudRateIsValid(int b_rate) {
+		int valid_baud_rates[] = {1200,2400,4800,9600,19200,38400,57600,115200,230400,460800,921600};
+		
+		if(!Arrays.asList(ArrayUtils.toObject(valid_baud_rates)).contains(b_rate)) {
+			logger.warn("Invalid baud rate. Using default baud_rate of " + DEFAULT_BAUD_RATE);
+			return false;
+		}
+		
+		return true;
 	}
+	
+	static class zigbeeBindingConfig implements BindingConfig {
+		
+		// The baud rate to connect to the xbee
+		static private int baudRate = DEFAULT_BAUD_RATE;
+		
+		static public void setBaudRate(int b_rate) {
+			baudRate = b_rate;
+		}
+		
+		static public int getBaudRate() {
+			return baudRate;
+		}
+		
+	}
+	
+
 	
 	
 }

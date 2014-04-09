@@ -11,6 +11,7 @@ package org.openhab.binding.zigbee.internal;
 import java.util.Dictionary;
 
 import org.openhab.binding.zigbee.zigbeeBindingProvider;
+import org.openhab.binding.zigbee.internal.zigbeeGenericBindingProvider.zigbeeBindingConfig;
 
 import org.apache.commons.lang.StringUtils;
 import org.openhab.core.binding.AbstractActiveBinding;
@@ -20,7 +21,8 @@ import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-	
+
+import com.rapplogic.xbee.api.XBeeException;
 
 /**
  * Implement this class if you are going create an actively polling service
@@ -31,16 +33,14 @@ import org.slf4j.LoggerFactory;
  */
 public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> implements ManagedService {
 
-	private static final Logger logger = 
-		LoggerFactory.getLogger(zigbeeBinding.class);
+	private static final Logger logger = LoggerFactory.getLogger(zigbeeBinding.class);
 
 	
 	/** 
-	 * the refresh interval which is used to poll values from the zigbee
+	 * the refresh interval which is used to poll values from the x10
 	 * server (optional, defaults to 60000ms)
 	 */
 	private long refreshInterval = 60000;
-	
 	
 	public zigbeeBinding() {
 	}
@@ -68,7 +68,7 @@ public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> 
 	 */
 	@Override
 	protected String getName() {
-		return "zigbee Refresh Service";
+		return "x10 Refresh Service";
 	}
 	
 	/**
@@ -116,7 +116,14 @@ public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> 
 				refreshInterval = Long.parseLong(refreshIntervalString);
 			}
 			
-			// read further config parameters here ...
+			String port = (String) config.get("port");
+			if (StringUtils.isNotBlank(port)) {
+				try {
+					new BroadcastReceiver(port, zigbeeBindingConfig.getBaudRate());
+				} catch(XBeeException e) {
+					logger.error(e.getMessage());
+				}
+			}
 
 			setProperlyConfigured(true);
 		}
