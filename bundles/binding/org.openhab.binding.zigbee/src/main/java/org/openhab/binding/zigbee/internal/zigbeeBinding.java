@@ -35,6 +35,7 @@ public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> 
 
 	private static final Logger logger = LoggerFactory.getLogger(zigbeeBinding.class);
 
+	private BroadcastReceiver broadcastReceiver;
 	
 	/** 
 	 * the refresh interval which is used to poll values from the x10
@@ -52,6 +53,7 @@ public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> 
 	public void deactivate() {
 		// deallocate resources here that are no longer needed and 
 		// should be reset when activating this binding again
+		broadcastReceiver.stopThread();
 	}
 
 	
@@ -89,6 +91,7 @@ public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> 
 		// event bus goes here. This method is only called if one of the 
 		// BindingProviders provide a binding for the given 'itemName'.
 		logger.debug("internalReceiveCommand() is called!");
+		eventPublisher.postCommand(itemName, command);
 	}
 	
 	/**
@@ -100,6 +103,8 @@ public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> 
 		// event bus goes here. This method is only called if one of the 
 		// BindingProviders provide a binding for the given 'itemName'.
 		logger.debug("internalReceiveCommand() is called!");
+		
+		eventPublisher.postUpdate(itemName, newState);
 	}
 		
 	/**
@@ -118,11 +123,9 @@ public class zigbeeBinding extends AbstractActiveBinding<zigbeeBindingProvider> 
 			
 			String port = (String) config.get("port");
 			if (StringUtils.isNotBlank(port)) {
-				try {
-					new BroadcastReceiver(port, zigbeeBindingConfig.getBaudRate());
-				} catch(XBeeException e) {
-					logger.error(e.getMessage());
-				}
+				broadcastReceiver = new BroadcastReceiver(port, zigbeeBindingConfig.getBaudRate(), zigbeeBindingConfig.getItem(), this);
+				broadcastReceiver.start();
+				
 			}
 
 			setProperlyConfigured(true);

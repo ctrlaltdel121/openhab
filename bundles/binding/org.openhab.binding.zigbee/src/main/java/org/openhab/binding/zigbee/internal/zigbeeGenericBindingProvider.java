@@ -66,6 +66,7 @@ public class zigbeeGenericBindingProvider extends AbstractGenericBindingProvider
 			b_rate = Integer.parseInt(bindingConfig);
 			if(baudRateIsValid(b_rate)) {
 				zigbeeBindingConfig.setBaudRate(b_rate);
+				zigbeeBindingConfig.setItem(item);
 				//addBindingConfig(item, config);
 			}
 		} catch(NumberFormatException e) {
@@ -89,6 +90,7 @@ public class zigbeeGenericBindingProvider extends AbstractGenericBindingProvider
 		
 		// The baud rate to connect to the xbee
 		static private int baudRate = DEFAULT_BAUD_RATE;
+		static private Item item;
 		
 		static public void setBaudRate(int b_rate) {
 			baudRate = b_rate;
@@ -96,6 +98,14 @@ public class zigbeeGenericBindingProvider extends AbstractGenericBindingProvider
 		
 		static public int getBaudRate() {
 			return baudRate;
+		}
+		
+		static public void setItem(Item i) {
+			item = i;
+		}
+		
+		static public Item getItem() {
+			return item;
 		}
 		
 	}
